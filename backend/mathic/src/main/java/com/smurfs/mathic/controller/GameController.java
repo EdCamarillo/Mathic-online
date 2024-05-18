@@ -77,12 +77,30 @@ public class GameController {
         return ResponseEntity.ok(gamesInfoList);
     }
 
+    @PostMapping("/start-game/{gameId}")
+    public ResponseEntity<Void> startGame(@PathVariable String gameId) throws NotFoundException {
+        GameDto game = gameService.getGameById(gameId);
+        simpMessagingTemplate.convertAndSend("/topic/game-start/" + gameId, game);
+        return ResponseEntity.ok().build();
+    }
+
+
     @GetMapping("/{gameId}")
     public ResponseEntity<GameDto> getGame(@AuthenticationPrincipal User user, @PathVariable String gameId) {
         try {
             GameDto game = gameService.getGameById(gameId);
             simpMessagingTemplate.convertAndSend("/topic/gameplay/" + gameId, game);
 
+            return ResponseEntity.ok(game);
+        } catch (NotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/{gameId}/data")
+    public ResponseEntity<Game> getGameData(@AuthenticationPrincipal User user, @PathVariable String gameId) {
+        try {
+            Game game = gameService.getGameDataById(gameId);
             return ResponseEntity.ok(game);
         } catch (NotFoundException e) {
             return ResponseEntity.notFound().build();

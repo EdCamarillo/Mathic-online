@@ -83,6 +83,14 @@ public class GameService {
         return toGameDto(game);
     }
 
+    public Game getGameDataById(String gameId) throws NotFoundException {
+        if (!GameStorage.getInstance().getGames().containsKey(gameId)) {
+            throw new NotFoundException("Game not found");
+        }
+    
+        return GameStorage.getInstance().getGames().get(gameId);
+    }
+
     public Game gamePlay(GamePlay gamePlay) throws NotFoundException, InvalidGameException, InvalidParamException {
         String gameId = gamePlay.getGameId();
         if (!GameStorage.getInstance().getGames().containsKey(gameId)) {

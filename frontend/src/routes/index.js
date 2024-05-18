@@ -5,6 +5,7 @@ import Login from "../components/Login";
 import Home from "../components/Home";
 import Signup from "../components/Signup";
 import Room from "../components/Room";
+import Game from "../components/Game";
 
 const Routes = () => {
   const { token } = useAuth();
@@ -29,12 +30,16 @@ const Routes = () => {
       children: [
         {
           path: "home",
-          element: <Home/>,
+          element: <Home />,
         },
         {
           path: "room/:gameId", // Add the Room route
           element: <Room />,
         },
+        {
+          path: "game/:gameId",
+          element: <Game />
+        }
       ],
     },
   ];

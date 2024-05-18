@@ -3,15 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../authentication/AuthProvider';
 
 const Home = () => {
-  const [users, setUsers] = useState([]);
+  const [games, setGames] = useState([]);
   const [gameCode, setGameCode] = useState('');
   const { token } = useAuth();
   const navigate = useNavigate();
 
-  const fetchData = async () => {
+  const fetchGames = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8080/users/', {
+      const response = await fetch('http://localhost:8080/game/all', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -19,12 +19,12 @@ const Home = () => {
         },
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch users');
+        throw new Error('Failed to fetch games');
       }
       const data = await response.json();
-      setUsers(data);
+      setGames(data);
     } catch (error) {
-      console.error('Failed to fetch users', error);
+      console.error('Failed to fetch games', error);
     }
   };
 
@@ -68,15 +68,17 @@ const Home = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchGames();
   }, []);
 
   return (
     <div>
-      <h2>Users</h2>
+      <h2>Games</h2>
       <ul>
-        {users.map(user => (
-          <li key={user.id}>{user.userName}</li>
+        {games.map(game => (
+          <li key={game.gameId}>
+            Game ID: {game.gameId} - Player 1: {game.player1.userName} - Status: {game.status}
+          </li>
         ))}
       </ul>
       <div>
