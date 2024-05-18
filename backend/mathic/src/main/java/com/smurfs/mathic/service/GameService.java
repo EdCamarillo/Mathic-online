@@ -96,46 +96,46 @@ public class GameService {
         if (!GameStorage.getInstance().getGames().containsKey(gameId)) {
             throw new NotFoundException("Game not found");
         }
-
+    
         Game game = GameStorage.getInstance().getGames().get(gameId);
         if (game.getStatus().equals(FINISHED)) {
             throw new InvalidGameException("Game is already finished");
         }
-
+    
         User currentPlayer = gamePlay.getPlayer();
         // Check turn
         if (!gamePlay.getPlayer().equals(game.getCurrentTurn())) {
             throw new InvalidGameException("It is still " + game.getCurrentTurn().toString() + "'s turn. " + currentPlayer + " tried to move");
         }
-
+    
         // Get the opponent player
         User opponent = (currentPlayer.equals(game.getPlayer1())) ? game.getPlayer2() : game.getPlayer1();
-
+    
         // Get the cards of the current player and the opponent
         int[] currentPlayerCards = (currentPlayer.equals(game.getPlayer1())) ? game.getPlayer1Cards() : game.getPlayer2Cards();
-        int[] opponentCards = (opponent.equals(game.getPlayer1())) ? game.getPlayer1Cards() : game.getPlayer2Cards();
-
+        int[] opponentCards = (currentPlayer.equals(game.getPlayer1())) ? game.getPlayer2Cards() : game.getPlayer1Cards();
+    
         int attackIndex = gamePlay.getCardIndex();
         int targetIndex = gamePlay.getTargetIndex();
-
+    
         // Validate card indices
         if (attackIndex < 0 || attackIndex >= currentPlayerCards.length || targetIndex < 0 || targetIndex >= opponentCards.length) {
             throw new InvalidParamException("Invalid card index");
         }
-
+    
         // Update the attacked card value
         int attackerCardValue = currentPlayerCards[attackIndex];
         int attackedCardValue = opponentCards[targetIndex];
         int newAttackedCardValue = attackedCardValue + attackerCardValue;
-
+    
         // Check if new attacked card value exceeds 5
         if (newAttackedCardValue > 5) {
             newAttackedCardValue %= 5;
         }
-
+    
         // Update the attacked card value
-        opponentCards[targetIndex] = newAttackedCardValue;
-
+        // opponentCards[targetIndex] = newAttackedCardValue;
+    
         // Check if any player's cards are all 0, indicating a loss
         if (areAllCardsZero(currentPlayerCards) || areAllCardsZero(opponentCards)) {
             // Set game status to FINISHED
@@ -144,7 +144,7 @@ public class GameService {
 
         // Switch turn to the opponent
         game.setCurrentTurn(opponent);
-
+    
         // Update the game state in the storage
         GameStorage.getInstance().setGame(game);
 
