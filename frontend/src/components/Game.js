@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../authentication/AuthProvider';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { Button, Container, Divider, Typography, Box } from '@mui/material';
 
 const Game = () => {
   const { gameId } = useParams();
@@ -107,37 +108,83 @@ const Game = () => {
   const opponentCards = isPlayer1 ? game.player2Cards : game.player1Cards;
 
   return (
-    <div>
-      <h2>Game</h2>
-      <p>Game ID: {game.gameId}</p>
-      <p>Current Turn: {game.currentTurn.userName}</p>
+    <Container>
+      <Typography variant="body2" color="textSecondary">
+        Game ID: {game.gameId}
+      </Typography>
 
-      <div>
-        <h3>Your Cards</h3>
-        {playerCards.map((cardValue, index) => (
-          <button
-            key={index}
-            onClick={() => handleCardClick(index, true)}
-            disabled={!isPlayerTurn || selectedCardIndex !== null}
-          >
-            {cardValue}
-          </button>
-        ))}
-      </div>
+      <Box display="flex" flexDirection="column" alignItems="center" height="100vh" m={0}>
 
-      <div>
-        <h3>Opponent's Cards</h3>
-        {opponentCards.map((cardValue, index) => (
-          <button
-            key={index}
-            onClick={() => handleCardClick(index, false)}
-            disabled={!isPlayerTurn || selectedCardIndex === null}
-          >
-            {cardValue}
-          </button>
-        ))}
-      </div>
-    </div>
+        <Box display="flex" justifyContent="center" mb="auto" mt={2}>
+          <Box>
+            <h3>{isPlayer1 ? game.player2.userName : game.player1.userName}</h3>
+            {opponentCards.map((cardValue, index) => (
+              <Button
+                key={index}
+                variant="contained"
+                sx={{ 
+                  width: 150, 
+                  height: 200, 
+                  margin: 1, 
+                  fontSize: '1.5rem', 
+                  color: 'white', 
+                  backgroundColor: '#E7767C', 
+                  '&:disabled': { backgroundColor: '#cfabad' },
+                  '&:hover': { 
+                    backgroundColor: '#e38489',
+                    transform: 'translateY(5px)',
+                    transition: 'transform 0.3s ease'
+                  }
+                }}
+                onClick={() => handleCardClick(index, false)}
+                disabled={!isPlayerTurn || selectedCardIndex === null}
+              >
+                {cardValue}
+              </Button>
+            ))}
+          </Box>
+        </Box>
+
+        <Box width={'75%'} mt={5} mb={5}>
+          <Divider>
+          <Typography variant="h5" gutterBottom>
+            {isPlayerTurn ? "Your Turn" : "Opponent's Turn"}
+          </Typography>
+          </Divider>
+        </Box>
+
+        <Box display="flex" justifyContent="center" mt="auto" mb={5}>
+          <Box>
+            <h3>{isPlayer1 ? game.player1.userName : game.player2.userName}</h3>
+            {playerCards.map((cardValue, index) => (
+              <Button
+                key={index}
+                variant="contained"
+                sx={{ 
+                  width: 150, 
+                  height: 200, 
+                  margin: 1, 
+                  fontSize: '1.5rem', 
+                  color: 'white', 
+                  backgroundColor: '#87B4EE', 
+                  '&:disabled': { backgroundColor: '#abc1de' },
+                  '&:hover': { 
+                    backgroundColor: '#98bded',
+                    transform: 'translateY(-5px)',
+                    transition: 'transform 0.3s ease'
+                  }
+                }}
+                onClick={() => handleCardClick(index, true)}
+                disabled={!isPlayerTurn || selectedCardIndex !== null}
+              >
+                {cardValue}
+              </Button>
+            ))}
+          </Box>
+        </Box>
+        
+      </Box>
+    </Container>
   );
 };
 
