@@ -132,7 +132,7 @@ const Game = () => {
                   '&:disabled': { backgroundColor: '#cfabad' },
                   '&:hover': { 
                     backgroundColor: '#e38489',
-                    transform: 'translateY(5px)',
+                    transform: 'translateY(10px)',
                     transition: 'transform 0.3s ease'
                   }
                 }}
@@ -170,7 +170,7 @@ const Game = () => {
                   '&:disabled': { backgroundColor: '#abc1de' },
                   '&:hover': { 
                     backgroundColor: '#98bded',
-                    transform: 'translateY(-5px)',
+                    transform: 'translateY(-10px)',
                     transition: 'transform 0.3s ease'
                   }
                 }}
