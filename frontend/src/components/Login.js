@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../authentication/AuthProvider';
+import { Container, Box, Typography, TextField, Button, Paper } from '@mui/material';
+import { ReactComponent as ReactLogo } from '../logo.svg';
+import '../App.css';
 
-function Login() {
+const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -13,7 +16,7 @@ function Login() {
   useEffect(() => {
     localStorage.removeItem('token');
     setToken(null);
-  });
+  }, [setToken]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,7 +34,6 @@ function Login() {
       }
   
       const data = await response.json();
-      // localStorage.setItem('token', data.token); // Store token in local storage
       setToken(data.token);
       navigate('/home'); // Redirect to home upon successful login
     } catch (error) {
@@ -40,28 +42,47 @@ function Login() {
     }
   };
 
-  const isAuthenticated = () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return false;
-    }
-  
-    // Additional checks if needed, e.g., token expiration, validation
-  
-    return true;
-  };
-
   return (
-    <div>
-      <h2>Login</h2>
-      {error && <div style={{ color: 'red' }}>{error}</div>} {/* Display error message */}
-      <form onSubmit={handleSubmit}>
-        <input type="text" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <button type="submit">Login</button>
-      </form>
-    </div>
+    <Container sx={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flexGrow: 1 }}>
+        <ReactLogo style={{ width: 'auto', height: '100%' }} />
+        <Typography variant="h1" component="h1" sx={{ textAlign: 'left', ml: 2 }}>
+          Mathic<br />matic
+        </Typography>
+      </Box>
+      <Paper sx={{ padding: 4, width: '400px', marginLeft: 30 }}>
+        <Typography variant="h4" component="h2" gutterBottom>
+          Login
+        </Typography>
+        {error && <Typography color="error">{error}</Typography>}
+        <form onSubmit={handleSubmit}>
+          <TextField
+            label="Email"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <TextField
+            label="Password"
+            type="password"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 3 }}>
+            Login
+          </Button>
+        </form>
+        <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+          Don't have an account? <Link to="/signup">Sign up</Link>
+        </Typography>
+      </Paper>
+    </Container>
   );
-}
+};
 
 export default Login;
