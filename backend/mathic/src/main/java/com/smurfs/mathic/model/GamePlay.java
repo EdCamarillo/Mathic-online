@@ -1,5 +1,8 @@
 package com.smurfs.mathic.model;
 
+import lombok.Data;
+
+@Data
 public class GamePlay {
     private String gameId;
     private User player;

@@ -41,9 +41,10 @@ public class GameService {
 
     public GameDto createGame(User player){
         Game game = new Game();
-        int[] initialCardValues = {1, 1}; // Initialize all card values to 1
-        game.setPlayer1Cards(initialCardValues);
-        game.setPlayer2Cards(initialCardValues);
+        int[] initialCardValuesPlayer1 = {1, 1}; // Initialize player 1's cards to 1
+        int[] initialCardValuesPlayer2 = {1, 1}; // Initialize all card values to 1
+        game.setPlayer1Cards(initialCardValuesPlayer1);
+        game.setPlayer2Cards(initialCardValuesPlayer2);
         game.setGameId(UUID.randomUUID().toString());
 
         game.setPlayer1(player);
@@ -98,6 +99,7 @@ public class GameService {
         }
     
         Game game = GameStorage.getInstance().getGames().get(gameId);
+
         if (game.getStatus().equals(FINISHED)) {
             throw new InvalidGameException("Game is already finished");
         }
@@ -112,30 +114,37 @@ public class GameService {
         User opponent = (currentPlayer.equals(game.getPlayer1())) ? game.getPlayer2() : game.getPlayer1();
     
         // Get the cards of the current player and the opponent
-        int[] currentPlayerCards = (currentPlayer.equals(game.getPlayer1())) ? game.getPlayer1Cards() : game.getPlayer2Cards();
-        int[] opponentCards = (currentPlayer.equals(game.getPlayer1())) ? game.getPlayer2Cards() : game.getPlayer1Cards();
+        int[] currentPlayerCards;
+        int[] opponentCards;
+        if (currentPlayer.equals(game.getPlayer1())) {
+            currentPlayerCards = game.getPlayer1Cards();
+            opponentCards = game.getPlayer2Cards();
+        }
+        else {
+            currentPlayerCards = game.getPlayer2Cards();
+            opponentCards = game.getPlayer1Cards();
+        }
     
         int attackIndex = gamePlay.getCardIndex();
         int targetIndex = gamePlay.getTargetIndex();
-    
+
         // Validate card indices
         if (attackIndex < 0 || attackIndex >= currentPlayerCards.length || targetIndex < 0 || targetIndex >= opponentCards.length) {
             throw new InvalidParamException("Invalid card index");
         }
     
         // Update the attacked card value
-        int attackerCardValue = currentPlayerCards[attackIndex];
-        int attackedCardValue = opponentCards[targetIndex];
+        final int attackerCardValue = currentPlayerCards[attackIndex];
+        final int attackedCardValue = opponentCards[targetIndex];
         int newAttackedCardValue = attackedCardValue + attackerCardValue;
-    
         // Check if new attacked card value exceeds 5
         if (newAttackedCardValue > 5) {
             newAttackedCardValue %= 5;
         }
     
         // Update the attacked card value
-        // opponentCards[targetIndex] = newAttackedCardValue;
-    
+        opponentCards[targetIndex] = newAttackedCardValue;
+        
         // Check if any player's cards are all 0, indicating a loss
         if (areAllCardsZero(currentPlayerCards) || areAllCardsZero(opponentCards)) {
             // Set game status to FINISHED

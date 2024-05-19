@@ -47,7 +47,6 @@ public class GameController {
     public ResponseEntity<GameDto> connect(@AuthenticationPrincipal User player, @RequestBody ConnectRequest request) throws InvalidParamException, InvalidGameException {
         GameDto game = gameService.connectToGame(player, request.getGameId());
         simpMessagingTemplate.convertAndSend("/topic/room-updates/" + request.getGameId(), game);
-
         return ResponseEntity.ok(game);
     }
 
