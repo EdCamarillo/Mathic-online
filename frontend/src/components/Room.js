@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../authentication/AuthProvider';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { Container, Box, Typography, Paper, Button, Grid, Divider } from '@mui/material';
 
 const Room = () => {
   const { gameId } = useParams();
@@ -33,7 +34,6 @@ const Room = () => {
 
     fetchGame();
 
-    // Establish WebSocket connection using STOMP
     const client = new Client({
       webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
       connectHeaders: {
@@ -45,7 +45,6 @@ const Room = () => {
           const updatedGame = JSON.parse(message.body);
           setGame(updatedGame);
         });
-        // Notify player 2 that game is starting
         client.subscribe(`/topic/game-start/${gameId}`, message => {
           navigate(`/game/${gameId}`);
         });
@@ -59,7 +58,6 @@ const Room = () => {
     client.activate();
     setStompClient(client);
 
-    // Cleanup WebSocket connection and notify server when component unmounts
     return () => {
       if (client) {
         client.deactivate();
@@ -91,16 +89,48 @@ const Room = () => {
 
   const isPlayer1 = game.player1 && user && game.player1.id === user.id;
 
+  const getPlayerColor = (player) => {
+    if ((isPlayer1 && player === game.player1) || (!isPlayer1 && player === game.player2)) {
+      return '#87B4EE'; // Blue
+    } else {
+      return '#E7767C'; // Red
+    }
+  };
+
   return (
-    <div>
-      <h2>Game Room</h2>
-      <p>Game ID: {game.gameId}</p>
-      <p>Player 1: {game.player1.username}</p>
-      <p>Player 2: {game.player2 ? game.player2.username : 'Waiting for player 2...'}</p>
-      {isPlayer1 && game.player2 && (
-        <button onClick={startGame}>Start Game</button>
-      )}
-    </div>
+    <Container sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <Box sx={{ marginRight: 4 }}>
+        <Paper sx={{ padding: 4, borderRadius: 4, bgcolor: '#e8e9ed' }}>
+          <Typography variant="h6">Game ID: {game.gameId}</Typography>
+        </Paper>
+        {isPlayer1 && game.player2 && (
+          <Button variant="contained" color="primary" sx={{ marginTop: 2 }} onClick={startGame}>
+            Start Game
+          </Button>
+        )}
+      </Box>
+      <Grid container spacing={2} alignItems="center" justifyContent="center">
+        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Paper sx={{ padding: 4, textAlign: 'center', height: 100, width: 300, borderRadius: 3, bgcolor: getPlayerColor(game.player1) }}>
+            <Typography variant="h5">{game.player1.username}</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Divider sx={{ width: '80%', my: 2 }}>
+            <Typography variant="h2">VS</Typography>
+          </Divider>
+        </Grid>
+        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center' }}>
+          {game.player2 ? (
+            <Paper sx={{ padding: 4, textAlign: 'center', height: 100, width: 300, borderRadius: 3, bgcolor: getPlayerColor(game.player2) }}>
+              <Typography variant="h5">{game.player2.username}</Typography>
+            </Paper>
+          ) : (
+            <Typography variant="h5">Waiting for a challenger...</Typography>
+          )}
+        </Grid>
+      </Grid>
+    </Container>
   );
 };
 
