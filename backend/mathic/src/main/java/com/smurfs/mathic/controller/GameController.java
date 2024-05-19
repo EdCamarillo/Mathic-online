@@ -37,16 +37,18 @@ public class GameController {
     }
 
     @PostMapping("/start")
-    public ResponseEntity<GameDto> start(@AuthenticationPrincipal User player){
+    public ResponseEntity<GameDto> start(@AuthenticationPrincipal User player) {
         GameDto game = gameService.createGame(player);
-
+        List<GameInfo> gamesInfoList = getAllGames().getBody(); // Fetch the updated list of games
+        simpMessagingTemplate.convertAndSend("/topic/games-list", gamesInfoList); // Broadcast the updated list
         return ResponseEntity.ok(game);
     }
 
     @PostMapping("/connect")
     public ResponseEntity<GameDto> connect(@AuthenticationPrincipal User player, @RequestBody ConnectRequest request) throws InvalidParamException, InvalidGameException {
         GameDto game = gameService.connectToGame(player, request.getGameId());
-        simpMessagingTemplate.convertAndSend("/topic/room-updates/" + request.getGameId(), game);
+        List<GameInfo> gamesInfoList = getAllGames().getBody(); // Fetch the updated list of games
+        simpMessagingTemplate.convertAndSend("/topic/games-list", gamesInfoList); // Broadcast the updated list
         return ResponseEntity.ok(game);
     }
 
@@ -72,6 +74,8 @@ public class GameController {
         for (Game game : gamesMap.values()) {
             gamesInfoList.add(new GameInfo(game.getGameId(), game.getPlayer1(), game.getStatus()));
         }
+
+        simpMessagingTemplate.convertAndSend("/topic/games-list", gamesInfoList);
 
         return ResponseEntity.ok(gamesInfoList);
     }

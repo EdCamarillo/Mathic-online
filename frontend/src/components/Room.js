@@ -45,6 +45,7 @@ const Room = () => {
           const updatedGame = JSON.parse(message.body);
           setGame(updatedGame);
         });
+        // Notify player 2 that game is starting
         client.subscribe(`/topic/game-start/${gameId}`, message => {
           navigate(`/game/${gameId}`);
         });
