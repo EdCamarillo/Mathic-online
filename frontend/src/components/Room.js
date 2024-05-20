@@ -115,7 +115,7 @@ const Room = () => {
             <Typography variant="h5">{game.player1.username}</Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center' }}>
+        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mt: 5, mb: 5 }}>
           <Divider sx={{ width: '80%', my: 2 }}>
             <Typography variant="h2">VS</Typography>
           </Divider>

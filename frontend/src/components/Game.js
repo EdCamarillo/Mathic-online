@@ -71,8 +71,10 @@ const Game = () => {
 
   const handleCardClick = (index, isOwnCard) => {
     if (isOwnCard) {
-      setSelectedCardIndex(index);
-    } else if (selectedCardIndex !== null) {
+      if (playerCards[index] !== 0) {
+        setSelectedCardIndex(index);
+      }
+    } else if (selectedCardIndex !== null && opponentCards[index] !== 0) {
       makeMove(selectedCardIndex, index);
     }
   };
@@ -137,7 +139,7 @@ const Game = () => {
                   }
                 }}
                 onClick={() => handleCardClick(index, false)}
-                disabled={!isPlayerTurn || selectedCardIndex === null}
+                disabled={!isPlayerTurn || selectedCardIndex === null || cardValue === 0}
               >
                 {cardValue}
               </Button>
@@ -175,7 +177,7 @@ const Game = () => {
                   }
                 }}
                 onClick={() => handleCardClick(index, true)}
-                disabled={!isPlayerTurn || selectedCardIndex !== null}
+                disabled={!isPlayerTurn || selectedCardIndex !== null || cardValue === 0}
               >
                 {cardValue}
               </Button>

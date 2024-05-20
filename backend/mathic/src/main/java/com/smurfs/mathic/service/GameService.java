@@ -132,13 +132,21 @@ public class GameService {
         if (attackIndex < 0 || attackIndex >= currentPlayerCards.length || targetIndex < 0 || targetIndex >= opponentCards.length) {
             throw new InvalidParamException("Invalid card index");
         }
+
+        // Ensure that the attack card and the target card are not zero
+        if (currentPlayerCards[attackIndex] == 0 || opponentCards[targetIndex] == 0) {
+            throw new InvalidGameException("Cannot attack with or target a card with value 0");
+        }
     
         // Update the attacked card value
         final int attackerCardValue = currentPlayerCards[attackIndex];
         final int attackedCardValue = opponentCards[targetIndex];
         int newAttackedCardValue = attackedCardValue + attackerCardValue;
-        // Check if new attacked card value exceeds 5
-        if (newAttackedCardValue > 5) {
+
+        // Check if new attacked card value equals 5, set to 0; otherwise, modulo 5
+        if (newAttackedCardValue == 5) {
+            newAttackedCardValue = 0;
+        } else if (newAttackedCardValue > 5) {
             newAttackedCardValue %= 5;
         }
     
