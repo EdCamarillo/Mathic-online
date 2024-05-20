@@ -109,6 +109,8 @@ const Game = () => {
   const playerCards = isPlayer1 ? game.player1Cards : game.player2Cards;
   const opponentCards = isPlayer1 ? game.player2Cards : game.player1Cards;
 
+  const winner = game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName;
+
   return (
     <Container>
       <Typography variant="body2" color="textSecondary">
@@ -149,9 +151,11 @@ const Game = () => {
 
         <Box width={'75%'} mt={5} mb={5}>
           <Divider>
-          <Typography variant="h5" gutterBottom>
-            {isPlayerTurn ? "Your Turn" : "Opponent's Turn"}
-          </Typography>
+            <Typography variant="h5" gutterBottom color={playerCards.every(card => card === 0) ? "#e38489" : "#87B4EE"}>
+              {game.status === "FINISHED" 
+                ? `${winner} wins!` 
+                : (isPlayerTurn ? "Your Turn" : "Opponent's Turn")}
+            </Typography>
           </Divider>
         </Box>
 
