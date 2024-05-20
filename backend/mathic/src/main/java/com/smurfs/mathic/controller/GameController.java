@@ -127,4 +127,32 @@ public class GameController {
 
         return ResponseEntity.ok(players);
     }
+
+    @PutMapping("/{gameId}/player1")
+    public ResponseEntity<GameDto> leavePlayer1(@AuthenticationPrincipal User user, @PathVariable String gameId){
+        try{
+            GameDto game = gameService.leavePlayer1(gameId);
+
+            simpMessagingTemplate.convertAndSend("/topic/gameplay/" + game.getGameId(), game);
+
+            return ResponseEntity.ok(game);
+        }catch(Exception e){
+            System.out.println(e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PutMapping("/{gameId}/player2")
+    public ResponseEntity<GameDto> leavePlayer2(@AuthenticationPrincipal User user, @PathVariable String gameId){
+        try{
+            GameDto game = gameService.leavePlayer2(gameId);
+
+            simpMessagingTemplate.convertAndSend("/topic/gameplay/" + game.getGameId(), game);
+
+            return ResponseEntity.ok(game);
+        }catch(Exception e){
+            System.out.println(e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

@@ -29,6 +29,7 @@ const Home = () => {
         setGames(data);
       } catch (error) {
         console.error('Failed to fetch games', error);
+        navigate('/login');
       }
     };
 
@@ -119,7 +120,7 @@ const Home = () => {
                   primary={`Player 1: ${game.player1.userName}`}
                   secondary={`Status: ${game.status}`}
                 />
-                {game.status === 'NEW' && (
+                {(game.status === 'NEW' || game.status === 'WAITING') && (
                   <Button
                     variant="contained"
                     color="primary"

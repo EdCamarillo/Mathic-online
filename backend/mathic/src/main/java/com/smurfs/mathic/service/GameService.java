@@ -55,6 +55,35 @@ public class GameService {
         return toGameDto(game);
     }
 
+    public GameDto leavePlayer1(String gameId) throws InvalidParamException{
+        if(!GameStorage.getInstance().getGames().containsKey(gameId)){
+            throw new InvalidParamException("Game with provided ID does not exist");
+        }
+
+        Game game = GameStorage.getInstance().getGames().get(gameId);
+
+        game.setPlayer1(game.getPlayer2());
+        game.setPlayer2(null);
+        game.setStatus(WAITING);
+        GameStorage.getInstance().setGame(game);
+
+        return toGameDto(game);
+    }
+
+    public GameDto leavePlayer2(String gameId) throws InvalidParamException{
+        if(!GameStorage.getInstance().getGames().containsKey(gameId)){
+            throw new InvalidParamException("Game with provided ID does not exist");
+        }
+
+        Game game = GameStorage.getInstance().getGames().get(gameId);
+
+        game.setPlayer2(null);
+        game.setStatus(WAITING);
+        GameStorage.getInstance().setGame(game);
+
+        return toGameDto(game);
+    }
+
     public GameDto connectToGame(User player2, String gameId) throws InvalidParamException, InvalidGameException {
         if(!GameStorage.getInstance().getGames().containsKey(gameId)){
             throw new InvalidParamException("Game with provided ID does not exist");
