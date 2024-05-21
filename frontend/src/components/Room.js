@@ -29,6 +29,7 @@ const Room = () => {
         setGame(data);
       } catch (error) {
         console.error('Failed to fetch game', error);
+        navigate('/home');
       }
     };
 
@@ -97,6 +98,58 @@ const Room = () => {
     }
   };
 
+  const isPlayerHost = (player) =>{
+    if ((isPlayer1 && player === game.player1) || (!isPlayer1 && player === game.player2)) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  const leavePlayer1 = async() => {
+    try{
+      const response = await fetch(`http://localhost:8080/game/${gameId}/player1`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if(!response.ok){
+        throw new Error('Failed to leave game');
+      }
+      const data = await response.json();
+
+      setGame(data);
+
+      navigate('/home');
+    }catch (error) {
+      console.error('Failed to leave game', error);
+    }
+  };
+
+  const leavePlayer2 = async () => {
+    try{
+      const response = await fetch(`http://localhost:8080/game/${gameId}/player2`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if(!response.ok){
+        throw new Error('Failed to leave game');
+      }
+      const data = await response.json();
+      setGame(data);
+      navigate('/home');
+    }catch (error) {
+      console.error('Failed to leave game', error);
+    }
+  };
+
   return (
     <Container sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
       <Box sx={{ marginRight: 4 }}>
@@ -108,6 +161,21 @@ const Room = () => {
             Start Game
           </Button>
         )}
+        <Button 
+          variant="contained" 
+          color="primary" 
+          sx={{ 
+            marginTop: 2, 
+            marginLeft: 2, 
+            backgroundColor: 'red', 
+            '&:hover': {
+              backgroundColor: 'darkred'
+            } 
+          }}
+          onClick={isPlayerHost(game.player1) ? leavePlayer1 : leavePlayer2}
+          >
+            Leave Game
+          </Button>
       </Box>
       <Grid container spacing={2} alignItems="center" justifyContent="center">
         <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center' }}>
