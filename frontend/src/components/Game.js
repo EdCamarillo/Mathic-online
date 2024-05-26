@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../authentication/AuthProvider';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
@@ -12,6 +12,8 @@ const Game = () => {
   const [selectedCardIndex, setSelectedCardIndex] = useState(null);
   const [isPlayer1, setIsPlayer1] = useState(false);
   const [stompClient, setStompClient] = useState(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchGame = async () => {
@@ -65,6 +67,12 @@ const Game = () => {
     };
   }, [gameId, token, user]);
 
+  // useEffect(()=>{
+  //   if(game && game.status === "FINISHED"){
+  //     navigate("/home");
+  //   }
+  // }, [game, navigate]);
+
   if (!game) {
     return <div>Loading...</div>;
   }
@@ -105,11 +113,17 @@ const Game = () => {
     }
   };
 
-  const isPlayerTurn = game.currentTurn.id === user.id;
+  const handleLeaveGame = () =>{
+    navigate("/home");
+  };
+
+  // const isPlayerTurn = game.currentTurn.id === user.id;
+  const isPlayerTurn = game.currentTurn && game.currentTurn.id === user.id;
   const playerCards = isPlayer1 ? game.player1Cards : game.player2Cards;
   const opponentCards = isPlayer1 ? game.player2Cards : game.player1Cards;
 
   const winner = game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName;
+  // const winner = game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName;
 
   return (
     <Container>
@@ -153,9 +167,28 @@ const Game = () => {
           <Divider>
             <Typography variant="h5" gutterBottom color={playerCards.every(card => card === 0) ? "#e38489" : "#87B4EE"}>
               {game.status === "FINISHED" 
-                ? `${winner} wins!` 
+                // ? `${winner} wins!` 
+                ? (winner === user.userName ? "Congratulations, You win!" : "GG, go next!")
                 : (isPlayerTurn ? "Your Turn" : "Opponent's Turn")}
             </Typography>
+            {game.status === "FINISHED" && (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={handleLeaveGame}
+                  sx={{
+                    width: 125,
+                    height: 30,
+                    fontSize: '1.25rem',
+                    backgroundColor: '#0096FF',
+                    '&:hover': {
+                      backgroundColor: '#0000FF'
+                    }
+                  }}
+                >
+                  Confirm
+                </Button>
+            )}
           </Divider>
         </Box>
 
