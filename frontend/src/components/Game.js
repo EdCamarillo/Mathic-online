@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../authentication/AuthProvider';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { Button, Container, Divider, Typography, Box } from '@mui/material';
+import { Button, Container, Divider, Typography, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 
 const Game = () => {
   const { gameId } = useParams();
@@ -12,7 +12,8 @@ const Game = () => {
   const [selectedCardIndex, setSelectedCardIndex] = useState(null);
   const [isPlayer1, setIsPlayer1] = useState(false);
   const [stompClient, setStompClient] = useState(null);
-
+  const [openSurrenderDialog, setOpenSurrenderDialog] = useState(false);
+  const [surrendered, setSurrendered] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -67,12 +68,6 @@ const Game = () => {
     };
   }, [gameId, token, user]);
 
-  // useEffect(()=>{
-  //   if(game && game.status === "FINISHED"){
-  //     navigate("/home");
-  //   }
-  // }, [game, navigate]);
-
   if (!game) {
     return <div>Loading...</div>;
   }
@@ -113,8 +108,43 @@ const Game = () => {
     }
   };
 
+  const handleSurrender = async() =>{
+    console.log(gameId);
+    try {
+      const response = await fetch(`http://localhost:8080/game/${gameId}`,{
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          gameId, 
+          player: user, 
+        }),
+      });
+      console.log(response.data);
+      if (!response.ok) {
+        throw new Error('Failed to surrender');
+      }
+      const updatedGame = await response.json();
+      setGame(updatedGame);
+    } catch (error) {
+      console.error('Failed to surrender', error);
+    }
+  }
+
   const handleLeaveGame = () =>{
     navigate("/home");
+  };
+
+  const handleSurrenderDialogOpen = () => {
+    setOpenSurrenderDialog(true);
+  };
+
+  const handleSurrenderDialogClose = () => {
+    handleSurrender(game.id);
+    setOpenSurrenderDialog(false);
+    setSurrendered(true);
   };
 
   // const isPlayerTurn = game.currentTurn.id === user.id;
@@ -122,7 +152,8 @@ const Game = () => {
   const playerCards = isPlayer1 ? game.player1Cards : game.player2Cards;
   const opponentCards = isPlayer1 ? game.player2Cards : game.player1Cards;
 
-  const winner = game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName;
+  const winner = surrendered ? (isPlayer1 ? game.player2.userName : game.player1.userName) : (game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName);
+  // const winner = game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName;
   // const winner = game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName;
 
   return (
@@ -221,8 +252,31 @@ const Game = () => {
             ))}
           </Box>
         </Box>
-        
+        {game.status !== "FINISHED" && (
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleSurrenderDialogOpen}
+            sx={{ mt: 2, marginBottom:"10px" }}
+          >
+            Surrender
+          </Button>
+        )}
       </Box>
+      <Dialog open={openSurrenderDialog} onClose={handleSurrenderDialogClose}>
+        <DialogTitle>Confirm Surrender</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">Are you sure you want to surrender?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleSurrenderDialogClose} color="primary">
+            No
+          </Button>
+          <Button color="secondary">
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
