@@ -113,11 +113,11 @@ const Home = () => {
           Available Games
         </Typography>
         <List>
-          {games.map(game => (
+          {games.filter(game=>game.status !== "FINISHED").map(game => (
             <Paper key={game.gameId} sx={{ marginBottom: 2, padding: 1, borderRadius: 3 }}>
               <ListItem>
                 <ListItemText
-                  primary={`Player 1: ${game.player1.userName}`}
+                  primary={`Host: ${game.player1.userName}`}
                   secondary={`Status: ${game.status}`}
                 />
                 {(game.status === 'NEW' || game.status === 'WAITING') && (

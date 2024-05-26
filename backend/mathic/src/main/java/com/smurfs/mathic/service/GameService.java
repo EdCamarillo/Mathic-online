@@ -62,9 +62,14 @@ public class GameService {
 
         Game game = GameStorage.getInstance().getGames().get(gameId);
 
+    if (game.getPlayer2() == null) {
+        game.setStatus(FINISHED);
+    } else {
         game.setPlayer1(game.getPlayer2());
         game.setPlayer2(null);
         game.setStatus(WAITING);
+    }
+
         GameStorage.getInstance().setGame(game);
 
         return toGameDto(game);
@@ -79,6 +84,25 @@ public class GameService {
 
         game.setPlayer2(null);
         game.setStatus(WAITING);
+        GameStorage.getInstance().setGame(game);
+
+        return toGameDto(game);
+    }
+
+
+    //TODO: IMPLEMENT GAME SURRENDER
+    public GameDto finishGameBySurrender(String gameId) throws NotFoundException, InvalidGameException {
+        if (!GameStorage.getInstance().getGames().containsKey(gameId)) {
+            throw new NotFoundException("Game not found");
+        }
+
+        Game game = GameStorage.getInstance().getGames().get(gameId);
+
+        if (game.getStatus() == FINISHED) {
+            throw new InvalidGameException("Game is already finished");
+        }
+
+        game.setStatus(FINISHED);
         GameStorage.getInstance().setGame(game);
 
         return toGameDto(game);

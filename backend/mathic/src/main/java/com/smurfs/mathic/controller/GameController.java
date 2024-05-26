@@ -137,7 +137,6 @@ public class GameController {
 
             return ResponseEntity.ok(game);
         }catch(Exception e){
-            System.out.println(e);
             return ResponseEntity.badRequest().build();
         }
     }
@@ -151,7 +150,19 @@ public class GameController {
 
             return ResponseEntity.ok(game);
         }catch(Exception e){
-            System.out.println(e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PutMapping("/{gameId}/surrender")
+    public ResponseEntity<GameDto> surrender(@PathVariable String gameId)
+    {
+        try{
+            GameDto game = gameService.finishGameBySurrender(gameId);
+            simpMessagingTemplate.convertAndSend("/topic/game-progress" + game.getGameId(), game);
+
+            return ResponseEntity.ok(game);
+        }catch(Exception e){
             return ResponseEntity.badRequest().build();
         }
     }
