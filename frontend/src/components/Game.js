@@ -30,8 +30,9 @@ const Game = () => {
           throw new Error('Failed to fetch game');
         }
         const data = await response.json();
-        setGame(data);
-        setIsPlayer1(data.player1.id === user.id);
+        setGame(data); 
+        if(data.status !== "FINISHED")
+          setIsPlayer1(data.player1.id === user.id);
       } catch (error) {
         console.error('Failed to fetch game', error);
       }
@@ -108,26 +109,24 @@ const Game = () => {
     }
   };
 
+  //TODO: DOES NOT UPDATE THE OTHER PLAYERS WITHOUT REFRESHING
   const handleSurrender = async() =>{
-    console.log(gameId);
     try {
-      const response = await fetch(`http://localhost:8080/game/${gameId}`,{
+      const response = await fetch(`http://localhost:8080/game/${gameId}/surrender`,{
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          gameId, 
-          player: user, 
-        }),
       });
-      console.log(response.data);
       if (!response.ok) {
         throw new Error('Failed to surrender');
       }
       const updatedGame = await response.json();
       setGame(updatedGame);
+      setSurrendered(true);
+      stompClient.publish({ destination: `/topic/gameplay/${gameId}`, body: JSON.stringify(updatedGame) });
+      navigate("/home");
     } catch (error) {
       console.error('Failed to surrender', error);
     }
@@ -141,18 +140,28 @@ const Game = () => {
     setOpenSurrenderDialog(true);
   };
 
-  const handleSurrenderDialogClose = () => {
-    handleSurrender(game.id);
+  const handleSurrenderDialogConfirm = () => {
+    handleSurrender();
     setOpenSurrenderDialog(false);
-    setSurrendered(true);
+  };
+  
+  const handleSurrenderDialogClose = () => {
+    setOpenSurrenderDialog(false);
   };
 
+  const defaultCards = Array(2).fill(0);
   // const isPlayerTurn = game.currentTurn.id === user.id;
-  const isPlayerTurn = game.currentTurn && game.currentTurn.id === user.id;
-  const playerCards = isPlayer1 ? game.player1Cards : game.player2Cards;
-  const opponentCards = isPlayer1 ? game.player2Cards : game.player1Cards;
+  const isPlayerTurn = game.status !== "FINISHED" && game.currentTurn && game.currentTurn.id === user.id;
+  const playerCards = isPlayer1 ? game.player1Cards || defaultCards : game.player2Cards || defaultCards;
+  const opponentCards = isPlayer1 ? game.player2Cards || defaultCards : game.player1Cards || defaultCards;
 
-  const winner = surrendered ? (isPlayer1 ? game.player2.userName : game.player1.userName) : (game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName);
+  const winner = surrendered
+  ? (isPlayer1 ? game.player2.userName : game.player1.userName)
+  : (isPlayer1
+    ? (game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName)
+    : (game.player2Cards.every(card => card === 0) ? game.player1.userName : game.player2.userName)
+  );
+  // const winner = surrendered ? (isPlayer1 ? game.player2.userName : game.player1.userName) : (game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName);
   // const winner = game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName;
   // const winner = game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName;
 
@@ -166,8 +175,9 @@ const Game = () => {
 
         <Box display="flex" justifyContent="center" mb="auto" mt={2}>
           <Box>
-            <h3>{isPlayer1 ? game.player2.userName : game.player1.userName}</h3>
-            {opponentCards.map((cardValue, index) => (
+            {/* <h3>{isPlayer1 ? game.player2.userName : game.player1.userName}</h3> */}
+            <h3>{isPlayer1 ? (game.player2 && game.player2.userName) : (game.player1 && game.player1.userName)}</h3>
+            {opponentCards && opponentCards.map((cardValue, index) => (
               <Button
                 key={index}
                 variant="contained"
@@ -199,7 +209,8 @@ const Game = () => {
             <Typography variant="h5" gutterBottom color={playerCards.every(card => card === 0) ? "#e38489" : "#87B4EE"}>
               {game.status === "FINISHED" 
                 // ? `${winner} wins!` 
-                ? (winner === user.userName ? "Congratulations, You win!" : "GG, go next!")
+                ? (winner === user?.userName && !surrendered ? "Your opponent surrendered! EZ" 
+                : (winner === user?.userName ? "Congratulations, You win!" : "GG, go next!"))
                 : (isPlayerTurn ? "Your Turn" : "Opponent's Turn")}
             </Typography>
             {game.status === "FINISHED" && (
@@ -272,7 +283,7 @@ const Game = () => {
           <Button onClick={handleSurrenderDialogClose} color="primary">
             No
           </Button>
-          <Button color="secondary">
+          <Button onClick={handleSurrenderDialogConfirm} color="secondary">
             Yes
           </Button>
         </DialogActions>

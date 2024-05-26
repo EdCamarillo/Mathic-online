@@ -72,19 +72,6 @@ public class GameService {
 
         GameStorage.getInstance().setGame(game);
 
-        // if(game.getPlayer2() == null)
-        // {
-        //     game.setPlayer1(null);
-        //     game.setStatus(FINISHED);
-        //     GameStorage.getInstance().setGame(game);
-        //     return toGameDto(game);
-        // }
-        
-        // game.setPlayer1(game.getPlayer2());
-        // game.setPlayer2(null);
-        // game.setStatus(WAITING);
-        // GameStorage.getInstance().setGame(game);
-
         return toGameDto(game);
     }
 
@@ -101,7 +88,6 @@ public class GameService {
 
         return toGameDto(game);
     }
-
 
 
     //TODO: IMPLEMENT GAME SURRENDER

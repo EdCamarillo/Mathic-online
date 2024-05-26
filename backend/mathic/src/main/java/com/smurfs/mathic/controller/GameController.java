@@ -159,7 +159,7 @@ public class GameController {
     {
         try{
             GameDto game = gameService.finishGameBySurrender(gameId);
-            simpMessagingTemplate.convertAndSend("/topic/gameplay" + game.getGameId(), game);
+            simpMessagingTemplate.convertAndSend("/topic/game-progress" + game.getGameId(), game);
 
             return ResponseEntity.ok(game);
         }catch(Exception e){
