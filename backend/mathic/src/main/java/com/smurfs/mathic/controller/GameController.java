@@ -129,7 +129,7 @@ public class GameController {
     }
 
     @PutMapping("/{gameId}/player1")
-    public ResponseEntity<GameDto> leavePlayer1(@AuthenticationPrincipal User user, @PathVariable String gameId){
+    public ResponseEntity<GameDto> leavePlayer1(@PathVariable String gameId){
         try{
             GameDto game = gameService.leavePlayer1(gameId);
 
@@ -142,7 +142,7 @@ public class GameController {
     }
 
     @PutMapping("/{gameId}/player2")
-    public ResponseEntity<GameDto> leavePlayer2(@AuthenticationPrincipal User user, @PathVariable String gameId){
+    public ResponseEntity<GameDto> leavePlayer2(@PathVariable String gameId){
         try{
             GameDto game = gameService.leavePlayer2(gameId);
 
@@ -154,12 +154,12 @@ public class GameController {
         }
     }
 
-    @PutMapping("/{gameId}/surrender")
-    public ResponseEntity<GameDto> surrender(@PathVariable String gameId)
+    @PostMapping("/{gameId}/surrender")
+    public ResponseEntity<GameDto> surrender(@AuthenticationPrincipal User user, @PathVariable String gameId)
     {
         try{
-            GameDto game = gameService.finishGameBySurrender(gameId);
-            simpMessagingTemplate.convertAndSend("/topic/game-progress" + game.getGameId(), game);
+            GameDto game = gameService.finishGameBySurrender(user, gameId);
+            simpMessagingTemplate.convertAndSend("/topic/game-progress/" + game.getGameId(), game);
 
             return ResponseEntity.ok(game);
         }catch(Exception e){

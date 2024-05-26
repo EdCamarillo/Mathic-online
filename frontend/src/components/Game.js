@@ -13,31 +13,35 @@ const Game = () => {
   const [isPlayer1, setIsPlayer1] = useState(false);
   const [stompClient, setStompClient] = useState(null);
   const [openSurrenderDialog, setOpenSurrenderDialog] = useState(false);
-  const [surrendered, setSurrendered] = useState(false);
+  const [surrendered, setSurrendered] = useState("");
+  const [winner, setWinner] = useState("");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchGame = async () => {
-      try {
-        const response = await fetch(`http://localhost:8080/game/${gameId}/data`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) {
-          throw new Error('Failed to fetch game');
-        }
-        const data = await response.json();
-        setGame(data); 
-        if(data.status !== "FINISHED")
-          setIsPlayer1(data.player1.id === user.id);
-      } catch (error) {
-        console.error('Failed to fetch game', error);
+  const fetchGame = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/game/${gameId}/data`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch game');
       }
-    };
+      const data = await response.json();
+      setGame(data);
 
+      // if(data.status !== "FINISHED")
+      setIsPlayer1(data.player1.id === user.id);
+
+    } catch (error) {
+      console.error('Failed to fetch game', error);
+    }
+  };
+
+  useEffect(() => {
+    
     fetchGame();
 
     const client = new Client({
@@ -68,6 +72,25 @@ const Game = () => {
       }
     };
   }, [gameId, token, user]);
+
+  useEffect(() => {
+    const determineWinner = () => {
+      if (game && game.status === "FINISHED") {
+        if (game.winner) {
+          setWinner(game.winner.userName);
+        } else {
+          if (game.player1Cards?.every(card => card === 0)) {
+            setWinner(game.player2.userName);
+          } else if (game.player2Cards?.every(card => card === 0)) {
+            setWinner(game.player1.userName);
+          }
+        }
+      }
+    };
+  
+    determineWinner();
+    fetchGame();
+  }, [game, winner]);
 
   if (!game) {
     return <div>Loading...</div>;
@@ -113,20 +136,28 @@ const Game = () => {
   const handleSurrender = async() =>{
     try {
       const response = await fetch(`http://localhost:8080/game/${gameId}/surrender`,{
-        method: 'PUT',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ 
+          gameId, 
+          player: user,
+        }),
       });
       if (!response.ok) {
         throw new Error('Failed to surrender');
       }
       const updatedGame = await response.json();
+      console.log(updatedGame.player1);
+      console.log(updatedGame.player2);
+      console.log(updatedGame.winner);
+      setWinner(updatedGame.winner.userName);
       setGame(updatedGame);
-      setSurrendered(true);
-      stompClient.publish({ destination: `/topic/gameplay/${gameId}`, body: JSON.stringify(updatedGame) });
-      navigate("/home");
+      fetchGame();
+      // setSurrendered(isPlayer1 ? updatedGame.player2.userName : updatedGame.player1.userName);
+      // navigate("/home");
     } catch (error) {
       console.error('Failed to surrender', error);
     }
@@ -154,16 +185,33 @@ const Game = () => {
   const isPlayerTurn = game.status !== "FINISHED" && game.currentTurn && game.currentTurn.id === user.id;
   const playerCards = isPlayer1 ? game.player1Cards || defaultCards : game.player2Cards || defaultCards;
   const opponentCards = isPlayer1 ? game.player2Cards || defaultCards : game.player1Cards || defaultCards;
+  
+  // const winner = game.winner 
+  // ? game.winner.userName
+  // : (game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName);  
+  
+  // const playerSurrender = () => {
+  //     playerCards = [0,0];
+  // }
+  // const winner = surrendered
+  // ? (isPlayer1 ? game.player2.userName : game.player1.userName)
+  // : (isPlayer1
+  //   ? (game.player1Cards?.every(card => card === 0) ? game.player2.userName : game.player1.userName)
+  //   : (game.player2Cards?.every(card => card === 0) ? game.player1.userName : game.player2.userName)
+  // );
 
-  const winner = surrendered
-  ? (isPlayer1 ? game.player2.userName : game.player1.userName)
-  : (isPlayer1
-    ? (game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName)
-    : (game.player2Cards.every(card => card === 0) ? game.player1.userName : game.player2.userName)
-  );
-  // const winner = surrendered ? (isPlayer1 ? game.player2.userName : game.player1.userName) : (game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName);
+  // const winner = surrendered 
+  // ? (isPlayer1 ? game.player2?.userName : game.player1?.userName) 
+  // : (game.player1Cards?.every(card => card === 0) ? game.player2.userName : game.player1.userName);
   // const winner = game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName;
-  // const winner = game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName;
+  // const winner = game.player1Cards?.every(card => card === 0) ? game.player2.userName : game.player1.userName;
+  // let winner = "";
+  // if(surrendered === game.player1.userName)
+  //   winner = game.player2.userName;
+  // else if(surrendered === game.player2.userName)
+  //   winner = game.player1.userName;
+  // else
+  //   winner = game.player1Cards?.every(card => card === 0) ? game.player2.userName : game.player1.userName;
 
   return (
     <Container>
@@ -207,13 +255,15 @@ const Game = () => {
         <Box width={'75%'} mt={5} mb={5}>
           <Divider>
             <Typography variant="h5" gutterBottom color={playerCards.every(card => card === 0) ? "#e38489" : "#87B4EE"}>
-              {game.status === "FINISHED" 
-                // ? `${winner} wins!` 
-                ? (winner === user?.userName && !surrendered ? "Your opponent surrendered! EZ" 
-                : (winner === user?.userName ? "Congratulations, You win!" : "GG, go next!"))
-                : (isPlayerTurn ? "Your Turn" : "Opponent's Turn")}
+            {game.status === "FINISHED"
+            ? winner
+              ? (winner === user?.userName ? "You opponent surrendered" : "You surrendered")
+              : "You surrendered"
+            : winner
+              ? `You ${winner === user?.userName ? 'win' : 'lose'}`
+              : (isPlayerTurn ? "Your Turn" : "Opponent's Turn")}
             </Typography>
-            {game.status === "FINISHED" && (
+            {game.status === "FINISHED" && winner !== "" && (
                 <Button
                   variant="contained"
                   color="secondary"
