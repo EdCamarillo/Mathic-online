@@ -9,6 +9,7 @@ public class Game {
     private int[] player1Cards;
     private int[] player2Cards;
     private User currentTurn;
+    private User winner;
 
     public Game() {
         this.player1Cards = new int[2];
@@ -70,6 +71,14 @@ public class Game {
 
     public void setCurrentTurn(User currentTurn) {
         this.currentTurn = currentTurn;
+    }
+
+    public User getWinner(){
+        return winner;
+    }
+
+    public void setWinner(User winner){
+        this.winner = winner;
     }
 }
 

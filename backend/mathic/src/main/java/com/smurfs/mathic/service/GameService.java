@@ -35,7 +35,8 @@ public class GameService {
         return new GameDto(
                 game.getGameId(),
                 toPlayerDto(game.getPlayer1()),
-                game.getPlayer2() != null ? toPlayerDto(game.getPlayer2()) : null
+                game.getPlayer2() != null ? toPlayerDto(game.getPlayer2()) : null,
+                game.getWinner() != null ? toPlayerDto(game.getWinner()) : null
         );
     }
 
@@ -91,7 +92,7 @@ public class GameService {
 
 
     //TODO: IMPLEMENT GAME SURRENDER
-    public GameDto finishGameBySurrender(String gameId) throws NotFoundException, InvalidGameException {
+    public GameDto finishGameBySurrender(User user, String gameId) throws NotFoundException, InvalidGameException {
         if (!GameStorage.getInstance().getGames().containsKey(gameId)) {
             throw new NotFoundException("Game not found");
         }
@@ -102,6 +103,18 @@ public class GameService {
             throw new InvalidGameException("Game is already finished");
         }
 
+        System.out.println(user);
+        System.out.println(game.getPlayer1());
+        System.out.println(game.getPlayer2());
+
+        if (user.equals(game.getPlayer1())) {
+            game.setWinner(game.getPlayer2());
+        } else if (user.equals(game.getPlayer2())) {
+            game.setWinner(game.getPlayer1());
+        } else {
+            throw new InvalidGameException("User not part of this game");
+        }            
+        System.out.println(game.getWinner());
         game.setStatus(FINISHED);
         GameStorage.getInstance().setGame(game);
 
