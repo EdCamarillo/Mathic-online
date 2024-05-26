@@ -90,7 +90,6 @@ public class GameService {
         return toGameDto(game);
     }
 
-
     //TODO: IMPLEMENT GAME SURRENDER
     public GameDto finishGameBySurrender(User user, String gameId) throws NotFoundException, InvalidGameException {
         if (!GameStorage.getInstance().getGames().containsKey(gameId)) {
@@ -190,39 +189,45 @@ public class GameService {
             currentPlayerCards = game.getPlayer2Cards();
             opponentCards = game.getPlayer1Cards();
         }
-    
+
         int attackIndex = gamePlay.getCardIndex();
-        int targetIndex = gamePlay.getTargetIndex();
 
-        // Validate card indices
-        if (attackIndex < 0 || attackIndex >= currentPlayerCards.length || targetIndex < 0 || targetIndex >= opponentCards.length) {
-            throw new InvalidParamException("Invalid card index");
-        }
+        // Check for split action
+        if (attackIndex == 2) {
+            performSplit(currentPlayerCards);
+        } else {
+            int targetIndex = gamePlay.getTargetIndex();
 
-        // Ensure that the attack card and the target card are not zero
-        if (currentPlayerCards[attackIndex] == 0 || opponentCards[targetIndex] == 0) {
-            throw new InvalidGameException("Cannot attack with or target a card with value 0");
-        }
-    
-        // Update the attacked card value
-        final int attackerCardValue = currentPlayerCards[attackIndex];
-        final int attackedCardValue = opponentCards[targetIndex];
-        int newAttackedCardValue = attackedCardValue + attackerCardValue;
+            // Validate card indices
+            if (attackIndex < 0 || attackIndex >= currentPlayerCards.length || targetIndex < 0 || targetIndex >= opponentCards.length) {
+                throw new InvalidParamException("Invalid card index");
+            }
 
-        // Check if new attacked card value equals 5, set to 0; otherwise, modulo 5
-        if (newAttackedCardValue == 5) {
-            newAttackedCardValue = 0;
-        } else if (newAttackedCardValue > 5) {
-            newAttackedCardValue %= 5;
-        }
-    
-        // Update the attacked card value
-        opponentCards[targetIndex] = newAttackedCardValue;
+            // Ensure that the attack card and the target card are not zero
+            if (currentPlayerCards[attackIndex] == 0 || opponentCards[targetIndex] == 0) {
+                throw new InvalidGameException("Cannot attack with or target a card with value 0");
+            }
         
-        // Check if any player's cards are all 0, indicating a loss
-        if (areAllCardsZero(currentPlayerCards) || areAllCardsZero(opponentCards)) {
-            // Set game status to FINISHED
-            game.setStatus(GameStatus.FINISHED);
+            // Update the attacked card value
+            final int attackerCardValue = currentPlayerCards[attackIndex];
+            final int attackedCardValue = opponentCards[targetIndex];
+            int newAttackedCardValue = attackedCardValue + attackerCardValue;
+
+            // Check if new attacked card value equals 5, set to 0; otherwise, modulo 5
+            if (newAttackedCardValue == 5) {
+                newAttackedCardValue = 0;
+            } else if (newAttackedCardValue > 5) {
+                newAttackedCardValue %= 5;
+            }
+        
+            // Update the attacked card value
+            opponentCards[targetIndex] = newAttackedCardValue;
+            
+            // Check if any player's cards are all 0, indicating a loss
+            if (areAllCardsZero(currentPlayerCards) || areAllCardsZero(opponentCards)) {
+                // Set game status to FINISHED
+                game.setStatus(GameStatus.FINISHED);
+            }
         }
 
         // Switch turn to the opponent
@@ -232,6 +237,20 @@ public class GameService {
         GameStorage.getInstance().setGame(game);
 
         return game;
+    }
+
+    private void performSplit(int[] playerCards) throws InvalidGameException {
+        if (playerCards.length != 2) {
+            throw new InvalidGameException("Invalid number of cards for split");
+        }
+
+        if (Math.abs(playerCards[0] - playerCards[1]) > 1) {
+            int total = playerCards[0] + playerCards[1];
+            playerCards[0] = total / 2;
+            playerCards[1] = total - (total / 2);
+        } else {
+            throw new InvalidGameException("Invalid split action");
+        }
     }
 
     private boolean areAllCardsZero(int[] cards) {

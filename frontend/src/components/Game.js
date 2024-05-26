@@ -31,19 +31,14 @@ const Game = () => {
       }
       const data = await response.json();
       setGame(data);
-
-      // if(data.status !== "FINISHED")
       setIsPlayer1(data.player1.id === user.id);
-
     } catch (error) {
       console.error('Failed to fetch game', error);
     }
   };
 
   useEffect(() => {
-    
     fetchGame();
-
     const client = new Client({
       webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
       connectHeaders: {
@@ -54,7 +49,7 @@ const Game = () => {
         client.subscribe(`/topic/game-progress/${gameId}`, message => {
           const updatedGame = JSON.parse(message.body);
           setGame(updatedGame);
-          setSelectedCardIndex(null); // Reset selected card index after opponent's move
+          setSelectedCardIndex(null);
         });
       },
       onStompError: (frame) => {
@@ -87,7 +82,7 @@ const Game = () => {
         }
       }
     };
-  
+
     determineWinner();
     fetchGame();
   }, [game, winner]);
@@ -126,16 +121,45 @@ const Game = () => {
       }
       const updatedGame = await response.json();
       setGame(updatedGame);
-      setSelectedCardIndex(null); // Reset selected card index after move
+      setSelectedCardIndex(null);
     } catch (error) {
       console.error('Failed to make move', error);
     }
   };
 
-  //TODO: DOES NOT UPDATE THE OTHER PLAYERS WITHOUT REFRESHING
-  const handleSurrender = async() =>{
+  const handleSplit = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/game/${gameId}/surrender`,{
+      const response = await fetch(`http://localhost:8080/game/gameplay`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          gameId,
+          player: user,
+          cardIndex: 2, // Special index to indicate a split action
+          targetIndex: null
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to perform split');
+      }
+      const updatedGame = await response.json();
+      setGame(updatedGame);
+    } catch (error) {
+      console.error('Failed to perform split', error);
+    }
+  };
+
+  const isSplitValid = () => {
+    const diff = Math.abs(playerCards[0] - playerCards[1]);
+    return diff > 1 && isPlayerTurn;
+  };
+
+  const handleSurrender = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/game/${gameId}/surrender`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -150,20 +174,15 @@ const Game = () => {
         throw new Error('Failed to surrender');
       }
       const updatedGame = await response.json();
-      console.log(updatedGame.player1);
-      console.log(updatedGame.player2);
-      console.log(updatedGame.winner);
       setWinner(updatedGame.winner.userName);
       setGame(updatedGame);
       fetchGame();
-      // setSurrendered(isPlayer1 ? updatedGame.player2.userName : updatedGame.player1.userName);
-      // navigate("/home");
     } catch (error) {
       console.error('Failed to surrender', error);
     }
   }
 
-  const handleLeaveGame = () =>{
+  const handleLeaveGame = () => {
     navigate("/home");
   };
 
@@ -181,37 +200,9 @@ const Game = () => {
   };
 
   const defaultCards = Array(2).fill(0);
-  // const isPlayerTurn = game.currentTurn.id === user.id;
   const isPlayerTurn = game.status !== "FINISHED" && game.currentTurn && game.currentTurn.id === user.id;
   const playerCards = isPlayer1 ? game.player1Cards || defaultCards : game.player2Cards || defaultCards;
   const opponentCards = isPlayer1 ? game.player2Cards || defaultCards : game.player1Cards || defaultCards;
-  
-  // const winner = game.winner 
-  // ? game.winner.userName
-  // : (game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName);  
-  
-  // const playerSurrender = () => {
-  //     playerCards = [0,0];
-  // }
-  // const winner = surrendered
-  // ? (isPlayer1 ? game.player2.userName : game.player1.userName)
-  // : (isPlayer1
-  //   ? (game.player1Cards?.every(card => card === 0) ? game.player2.userName : game.player1.userName)
-  //   : (game.player2Cards?.every(card => card === 0) ? game.player1.userName : game.player2.userName)
-  // );
-
-  // const winner = surrendered 
-  // ? (isPlayer1 ? game.player2?.userName : game.player1?.userName) 
-  // : (game.player1Cards?.every(card => card === 0) ? game.player2.userName : game.player1.userName);
-  // const winner = game.player1Cards.every(card => card === 0) ? game.player2.userName : game.player1.userName;
-  // const winner = game.player1Cards?.every(card => card === 0) ? game.player2.userName : game.player1.userName;
-  // let winner = "";
-  // if(surrendered === game.player1.userName)
-  //   winner = game.player2.userName;
-  // else if(surrendered === game.player2.userName)
-  //   winner = game.player1.userName;
-  // else
-  //   winner = game.player1Cards?.every(card => card === 0) ? game.player2.userName : game.player1.userName;
 
   return (
     <Container>
@@ -223,7 +214,6 @@ const Game = () => {
 
         <Box display="flex" justifyContent="center" mb="auto" mt={2}>
           <Box>
-            {/* <h3>{isPlayer1 ? game.player2.userName : game.player1.userName}</h3> */}
             <h3>{isPlayer1 ? (game.player2 && game.player2.userName) : (game.player1 && game.player1.userName)}</h3>
             {opponentCards && opponentCards.map((cardValue, index) => (
               <Button
@@ -257,8 +247,8 @@ const Game = () => {
             <Typography variant="h5" gutterBottom color={playerCards.every(card => card === 0) ? "#e38489" : "#87B4EE"}>
             {game.status === "FINISHED"
             ? winner
-              ? (winner === user?.userName ? "You opponent surrendered" : "You surrendered")
-              : "You surrendered"
+              ? (winner === user?.userName ? "Your Opponent Surrendered!" : "You Surrendered!")
+              : "You Surrendered!"
             : winner
               ? `You ${winner === user?.userName ? 'win' : 'lose'}`
               : (isPlayerTurn ? "Your Turn" : "Opponent's Turn")}
@@ -266,28 +256,25 @@ const Game = () => {
             {game.status === "FINISHED" && winner !== "" && (
                 <Button
                   variant="contained"
-                  color="secondary"
+                  color="primary"
                   onClick={handleLeaveGame}
                   sx={{
-                    width: 125,
-                    height: 30,
-                    fontSize: '1.25rem',
-                    backgroundColor: '#0096FF',
-                    '&:hover': {
-                      backgroundColor: '#0000FF'
-                    }
+                    width: 175,
+                    height: 50,
+                    fontSize: '1rem',
+                    marginTop: 2,
                   }}
                 >
-                  Confirm
+                  Leave Game
                 </Button>
-            )}
+              )}
           </Divider>
         </Box>
 
-        <Box display="flex" justifyContent="center" mt="auto" mb={5}>
+        <Box display="flex" justifyContent="center">
           <Box>
-            <h3>{isPlayer1 ? game.player1.userName : game.player2.userName}</h3>
-            {playerCards.map((cardValue, index) => (
+            <h3>{isPlayer1 ? (game.player1 && game.player1.userName) : (game.player2 && game.player2.userName)}</h3>
+            {playerCards && playerCards.map((cardValue, index) => (
               <Button
                 key={index}
                 variant="contained"
@@ -297,44 +284,63 @@ const Game = () => {
                   margin: 1, 
                   fontSize: '1.5rem', 
                   color: 'white', 
-                  backgroundColor: '#87B4EE', 
-                  '&:disabled': { backgroundColor: '#abc1de' },
+                  backgroundColor: selectedCardIndex === index ? '#87B4EE' : '#91BAD6',
+                  '&:disabled': { backgroundColor: '#c2d7ec' },
                   '&:hover': { 
-                    backgroundColor: '#98bded',
+                    backgroundColor: '#a2c9e9',
                     transform: 'translateY(-10px)',
                     transition: 'transform 0.3s ease'
                   }
                 }}
                 onClick={() => handleCardClick(index, true)}
-                disabled={!isPlayerTurn || selectedCardIndex !== null || cardValue === 0}
+                disabled={!isPlayerTurn || cardValue === 0}
               >
                 {cardValue}
               </Button>
             ))}
           </Box>
         </Box>
-        {game.status !== "FINISHED" && (
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleSurrenderDialogOpen}
-            sx={{ mt: 2, marginBottom:"10px" }}
-          >
-            Surrender
-          </Button>
+
+        {isPlayerTurn && (
+          <Box mt={2}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSplit}
+              disabled={!isSplitValid()}
+              sx={{
+                marginRight: 2,
+              }}
+            >
+              Split
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleSurrenderDialogOpen}
+            >
+              Surrender
+            </Button>
+          </Box>
         )}
       </Box>
-      <Dialog open={openSurrenderDialog} onClose={handleSurrenderDialogClose}>
-        <DialogTitle>Confirm Surrender</DialogTitle>
+
+      <Dialog
+        open={openSurrenderDialog}
+        onClose={handleSurrenderDialogClose}
+      >
+        <DialogTitle>{"Confirm Surrender"}</DialogTitle>
         <DialogContent>
-          <Typography variant="body1">Are you sure you want to surrender?</Typography>
+          <DialogContentText>
+            Are you sure you want to surrender? This will end the game and declare your opponent the winner.
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleSurrenderDialogClose} color="primary">
-            No
+            Cancel
           </Button>
-          <Button onClick={handleSurrenderDialogConfirm} color="secondary">
-            Yes
+          <Button onClick={handleSurrenderDialogConfirm} color="primary" autoFocus>
+            Confirm
           </Button>
         </DialogActions>
       </Dialog>
