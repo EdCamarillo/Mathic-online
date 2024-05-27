@@ -13,7 +13,7 @@ const Game = () => {
   const [isPlayer1, setIsPlayer1] = useState(false);
   const [stompClient, setStompClient] = useState(null);
   const [openSurrenderDialog, setOpenSurrenderDialog] = useState(false);
-  const [surrendered, setSurrendered] = useState("");
+  const [surrendered, setSurrendered] = useState(false);
   const [winner, setWinner] = useState("");
   const navigate = useNavigate();
 
@@ -176,7 +176,8 @@ const Game = () => {
       const updatedGame = await response.json();
       setWinner(updatedGame.winner.userName);
       setGame(updatedGame);
-      fetchGame();
+      setSurrendered(true);
+      //fetchGame();
     } catch (error) {
       console.error('Failed to surrender', error);
     }
@@ -245,13 +246,22 @@ const Game = () => {
         <Box width={'75%'} mt={5} mb={5}>
           <Divider>
             <Typography variant="h5" gutterBottom color={playerCards.every(card => card === 0) ? "#e38489" : "#87B4EE"}>
-            {game.status === "FINISHED"
+            {/* {game.status === "FINISHED" && !surrendered
             ? winner
               ? (winner === user?.userName ? "Your Opponent Surrendered!" : "You Surrendered!")
               : "You Surrendered!"
             : winner
               ? `You ${winner === user?.userName ? 'win' : 'lose'}`
-              : (isPlayerTurn ? "Your Turn" : "Opponent's Turn")}
+              : (isPlayerTurn ? "Your Turn" : "Opponent's Turn")} */}
+              {game.status === "FINISHED" && !surrendered
+              ? winner
+                ? `You ${winner === user?.userName ? 'win' : 'lose'}`
+                : (isPlayerTurn ? "Your Turn" : "Opponent's Turn")
+              : winner
+                ? (winner === user?.userName ? "Your Opponent Surrendered!" : "You Surrendered!")
+                : (isPlayerTurn ? "Your Turn" : "Opponent's Turn")}
+
+                
             </Typography>
             {game.status === "FINISHED" && winner !== "" && (
                 <Button
