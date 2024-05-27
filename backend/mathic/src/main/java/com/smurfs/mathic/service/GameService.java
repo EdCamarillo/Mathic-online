@@ -195,7 +195,11 @@ public class GameService {
         // Check for split action
         if (attackIndex == 2) {
             performSplit(currentPlayerCards);
-        } else {
+        }
+        else if (attackIndex == 3) {
+            performCombine(currentPlayerCards);
+        }
+        else {
             int targetIndex = gamePlay.getTargetIndex();
 
             // Validate card indices
@@ -250,6 +254,20 @@ public class GameService {
             playerCards[1] = total - (total / 2);
         } else {
             throw new InvalidGameException("Invalid split action");
+        }
+    }
+
+    private void performCombine(int[] playerCards) throws InvalidGameException {
+        if (playerCards.length != 2) {
+            throw new InvalidGameException("Invalid number of cards for combine");
+        }
+
+        if (Math.abs(playerCards[0] + playerCards[1]) != 5) {
+            int total = playerCards[0] + playerCards[1];
+            playerCards[1] = total %= 5;
+            playerCards[0] = 0;
+        } else {
+            throw new InvalidGameException("Invalid combine action");
         }
     }
 

@@ -157,6 +157,36 @@ const Game = () => {
     return diff > 1 && isPlayerTurn;
   };
 
+  const handleCombine = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/game/gameplay`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          gameId,
+          player: user,
+          cardIndex: 3, // Special index to indicate a combine action
+          targetIndex: null
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to perform split');
+      }
+      const updatedGame = await response.json();
+      setGame(updatedGame);
+    } catch (error) {
+      console.error('Failed to perform split', error);
+    }
+  };
+
+  const isCombineValid = () => {
+    const sum = Math.abs(playerCards[0] + playerCards[1]);
+    return sum !== 5 && isPlayerTurn && !(playerCards[0] === 0 || playerCards[1] === 0);
+  };
+
   const handleSurrender = async () => {
     try {
       const response = await fetch(`http://localhost:8080/game/${gameId}/surrender`, {
@@ -253,14 +283,16 @@ const Game = () => {
             : winner
               ? `You ${winner === user?.userName ? 'win' : 'lose'}`
               : (isPlayerTurn ? "Your Turn" : "Opponent's Turn")} */}
-              {game.status === "FINISHED" && !surrendered
+              {/* {game.status === "FINISHED" && !surrendered
               ? winner
                 ? `You ${winner === user?.userName ? 'win' : 'lose'}`
                 : (isPlayerTurn ? "Your Turn" : "Opponent's Turn")
               : winner
                 ? (winner === user?.userName ? "Your Opponent Surrendered!" : "You Surrendered!")
-                : (isPlayerTurn ? "Your Turn" : "Opponent's Turn")}
-
+                : (isPlayerTurn ? "Your Turn" : "Opponent's Turn")} */}
+              {(game.status === "FINISHED" && !surrendered)? `You ${winner === user?.userName ? `win` : `lose`}`
+              : surrendered ? (winner === user?.userName ? `Your opponent surrendered` : `You surrendered`)
+              : (isPlayerTurn ? `Your Turn` : `Opponent's Turn`)}
                 
             </Typography>
             {game.status === "FINISHED" && winner !== "" && (
@@ -323,6 +355,17 @@ const Game = () => {
               }}
             >
               Split
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleCombine}
+              disabled={!isCombineValid()}
+              sx={{
+                marginRight: 2,
+              }}
+            >
+              Combine
             </Button>
             <Button
               variant="contained"
