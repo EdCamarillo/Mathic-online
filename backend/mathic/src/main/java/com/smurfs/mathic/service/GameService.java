@@ -102,10 +102,6 @@ public class GameService {
             throw new InvalidGameException("Game is already finished");
         }
 
-        System.out.println(user);
-        System.out.println(game.getPlayer1());
-        System.out.println(game.getPlayer2());
-
         if (user.equals(game.getPlayer1())) {
             game.setWinner(game.getPlayer2());
         } else if (user.equals(game.getPlayer2())) {
@@ -113,7 +109,7 @@ public class GameService {
         } else {
             throw new InvalidGameException("User not part of this game");
         }            
-        System.out.println(game.getWinner());
+
         game.setStatus(FINISHED);
         GameStorage.getInstance().setGame(game);
 

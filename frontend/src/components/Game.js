@@ -234,7 +234,7 @@ const Game = () => {
   const isPlayerTurn = game.status !== "FINISHED" && game.currentTurn && game.currentTurn.id === user.id;
   const playerCards = isPlayer1 ? game.player1Cards || defaultCards : game.player2Cards || defaultCards;
   const opponentCards = isPlayer1 ? game.player2Cards || defaultCards : game.player1Cards || defaultCards;
-
+  const surrender = game.player1Cards?.every(card => card !== 0) && game.player2Cards?.every(card => card !== 0) && game.status == "FINISHED";
   return (
     <Container>
       <Typography variant="body2" color="textSecondary">
@@ -275,7 +275,16 @@ const Game = () => {
 
         <Box width={'75%'} mt={5} mb={5}>
           <Divider>
-            <Typography variant="h5" gutterBottom color={playerCards.every(card => card === 0) ? "#e38489" : "#87B4EE"}>
+            <Typography variant="h5" gutterBottom 
+            color={game.status === "FINISHED" && !surrendered && !surrender ? 
+              (winner === user?.userName ? "green" : "red") : 
+              (surrendered || surrender ? 
+                (winner === user?.userName ? "green" : "red") : 
+                (playerCards.every(card => card === 0) ? "#e38489" : "#87B4EE")
+              )
+            }
+            // color={playerCards.every(card => card === 0) ? "#e38489" : "#87B4EE"}
+            >
             {/* {game.status === "FINISHED" && !surrendered
             ? winner
               ? (winner === user?.userName ? "Your Opponent Surrendered!" : "You Surrendered!")
@@ -290,10 +299,9 @@ const Game = () => {
               : winner
                 ? (winner === user?.userName ? "Your Opponent Surrendered!" : "You Surrendered!")
                 : (isPlayerTurn ? "Your Turn" : "Opponent's Turn")} */}
-              {(game.status === "FINISHED" && !surrendered)? `You ${winner === user?.userName ? `win` : `lose`}`
-              : surrendered ? (winner === user?.userName ? `Your opponent surrendered` : `You surrendered`)
+              {(game.status === "FINISHED" && !surrendered && !surrender)? `You ${winner === user?.userName ? `win` : `lose`}`
+              : surrendered || (surrender)? (winner === user?.userName ? `Opponent surrendered, You win` : `You surrendered`)
               : (isPlayerTurn ? `Your Turn` : `Opponent's Turn`)}
-                
             </Typography>
             {game.status === "FINISHED" && winner !== "" && (
                 <Button
